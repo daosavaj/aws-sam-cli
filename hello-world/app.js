@@ -1,6 +1,8 @@
 
-const axios = require('axios');
+const axios = require('axios')
 const url = 'http://checkip.amazonaws.com/';
+let response;
+
 /**
  *
  * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
@@ -16,7 +18,7 @@ const url = 'http://checkip.amazonaws.com/';
  * @param {Object} event.body - A JSON string of the request payload.
  * @param {boolean} event.body.isBase64Encoded - A boolean flag to indicate if the applicable request payload is Base64-encode
  *
- * Context doc: https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html 
+ * Context doc: https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
  * @param {Object} context
  * @param {string} context.logGroupName - Cloudwatch Log Group name
  * @param {string} context.logStreamName - Cloudwatch Log stream name.
@@ -33,34 +35,18 @@ const url = 'http://checkip.amazonaws.com/';
  * @returns {string} object.statusCode - HTTP Status Code to be returned to the client
  * @returns {Object} object.headers - HTTP Headers to be returned
  * @returns {Object} object.body - JSON Payload to be returned
- * 
+ *
  */
 exports.lambdaHandler = async (event, context) => {
-
-    let response = {
-        statusCode: 200,
-        body: JSON.stringify(`This is the default response`)
-    };
-
     try {
-
-        switch (event.httpMethod) {
-            case 'DELETE':
-                sendResponse(200,event);
-                break;
-            case 'GET':
-                response = await get(event,context);
-                break;
-            case 'POST':
-                return sendResponse(event, context);
-            case 'PUT':
-                sendResponse(200,event.httpMethod);
-                break;
-            default:
-                sendResponse(404, `Unsupported method"${event.httpMethod}"`);
+        const ret = await axios(url);
+        response = {
+            'statusCode': 200,
+            'body': JSON.stringify({
+                message: 'hello world',
+                location: ret.data.trim()
+            })
         }
-
-
     } catch (err) {
         console.log(err);
         return err;
@@ -68,32 +54,3 @@ exports.lambdaHandler = async (event, context) => {
 
     return response
 };
-
-//promisified setTimeout
-const waitFor = (ms) => new Promise(r => setTimeout(r, ms));
-
-const get = async (event,content) => {
-
-    let ret = await axios(url);
-
-    return {
-        'statusCode': 200,
-        'body': JSON.stringify({
-            message: 'hello world',
-            httpMethod: event.httpMethod,
-            location: ret.data.trim()
-        })
-    }
-};
-
-
-function sendResponse(event, content) {
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify(`${message} is your request`)
-    };
-
-
-}
-
