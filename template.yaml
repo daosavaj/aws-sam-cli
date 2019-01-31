@@ -9,28 +9,44 @@ Description: >
 Globals:
     Function:
         Timeout: 30
+        Environment:
+          Variables:
+            DYNAMODB_ENTPOINT: http://localstak:4569
+            AWS_REGION: na-east-2
+            DYNAMODB_TABLE: task
 Resources:
-    Function:
+    PutFunction:
         Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
         Properties:
-            CodeUri: hello-world/
-            Handler: app.handler
+            CodeUri: task/
+            Handler: app.putTask
             Runtime: nodejs8.10
             Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
                 Variables:
                     PARAM1: VALUE
-                    PARAM2: two
+                    PARAM2: VALUE2
             Events:
-                GetHelloWorld:
+                APIEvent:
                     Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
                     Properties:
-                        Path: /hello
-                        Method: get
-                PostHelloWorld:
-                    Type: Api
-                    Properties:
-                      Path: /hello
-                      Method: post
+                        Path: /tasks/{taskId}
+                        Method: put
+    GetFunction:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+        CodeUri: task/
+        Handler: app.getTask
+        Runtime: nodejs8.10
+        Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+          Variables:
+            PARAM1: VALUE
+            PARAM2: GETVALUE
+        Events:
+          GetHelloWorld:
+            Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+            Properties:
+              Path: /tasks/{taskId}
+              Method: get
 Outputs:
     HelloWorldApi:
       Description: "API Gateway endpoint URL for Prod stage for Hello World function"

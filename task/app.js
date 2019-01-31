@@ -2,34 +2,63 @@
 const axios = require('axios');
 const url = 'http://checkip.amazonaws.com/';
 const AWSXRay = require('aws-xray-sdk-core');
-const AWS = AWSXRay.captureAWS(require('aws-sdk'));
-const documentClient = new AWS.DynamoDB.DocumentClient({region: 'us-east-2', endpoint: 'http://localhost:4569', convertEmptyValues:true});
+const AWS = require('aws-sdk');
+const documentClient = new AWS.DynamoDB.DocumentClient({
+    region: process.env.AWS_REGION,
+    endpoint: process.env.DYNAMODB_ENTPOINT || undefined,
+    convertEmptyValues:true});
 
-const dynamoPut = (params) => {
+const dynamoPut = async (params) => {
     return documentClient.put(params).promise()
 };
 
+const dynamoQuery = async (params) => {
+    return documentClient.query(params).promise()
+};
 
 
-let response;
-
-const handler = async (event, context) => {
+const getTask = async (event, context) => {
     try {
-        await dynamoPut({TableName:"", Item: {Id:123}});
+        return generateResponse(200,{hello:"world"});
+        let check = await dynamoQuery({
+            TableName:process.env.DYNAMODB_TABLE,
+            KeyConditionExpression: 'Id = :id',
+            ExpressionAttributeValues: {
+                id: parseInt(event.pathParameters.taskId)
+            }
+        });
 
+        return generateResponse(200, {
+                check:check
+            });
 
-
-        response = generateResponse(200, {
-            hello:"world",
-            location: ret.data.trim(),
-            event: event
-            })
     } catch (err) {
         console.log(err);
         return err;
     }
 
-    return response
+};
+
+const putTask = async (event, context) => {
+    try {
+        let check = await dynamoPut({
+            TableName:process.env.DYNAMODB_TABLE,
+            Item: {
+                Id:parseInt(event.pathParameters.taskId),
+                Task: JSON.parse(String(event.body.Task)),
+                Complete: Boolean(event.body.Complete)
+            }
+        });
+
+        return generateResponse(200, {
+            check: check
+        });
+
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+
 };
 
 
@@ -41,8 +70,35 @@ const generateResponse = (statusCode, body) => {
 };
 
 module.exports = {
-    handler
+    handler,
+    getTask,
+    putTask
 };
+
+const handler = async (event, context) => {
+    try {
+
+        let check = await dynamoPut({
+            TableName:"task",
+            Item: {id:'1'}
+        });
+
+        let response = generateResponse(200, {
+            hello:"world",
+            check: check
+        });
+
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+
+    return response
+};
+
+
+handler().then(res=>console.log(res));
+
 
 /**
  *
