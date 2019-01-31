@@ -11,7 +11,7 @@ const lambda = async (event, context) => {
     };
     try {
         response = await get(event,context);
-        console.log("after response" + this.yesvar + "\r");
+        console.log("after response " + this.yesvar + "\r");
         console.log(response);
     } catch (err) {
         console.log(err);
@@ -29,11 +29,10 @@ const get = async (event,content) => {
 
     this.yesvar = "yes";
 
-    return ret.data.trim();
+
 
 
 };
 
 // lambda().then((res) => console.log(res));
-let test = lambda();
-console.log(test.then(res => console.log(res)));
+lambda();

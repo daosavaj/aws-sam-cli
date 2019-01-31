@@ -1,7 +1,48 @@
 
-const axios = require('axios')
+const axios = require('axios');
 const url = 'http://checkip.amazonaws.com/';
+const AWSXRay = require('aws-xray-sdk-core');
+const AWS = AWSXRay.captureAWS(require('aws-sdk'));
+const documentClient = new AWS.DynamoDB.DocumentClient({region: 'us-east-2', endpoint: 'http://localhost:4569', convertEmptyValues:true});
+
+const dynamoPut = (params) => {
+    return documentClient.put(params).promise()
+};
+
+
+
 let response;
+
+const handler = async (event, context) => {
+    try {
+        await dynamoPut({TableName:"", Item: {Id:123}});
+
+
+
+        response = generateResponse(200, {
+            hello:"world",
+            location: ret.data.trim(),
+            event: event
+            })
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+
+    return response
+};
+
+
+const generateResponse = (statusCode, body) => {
+    return {
+        'statusCode':statusCode,
+        'body': JSON.stringify(body)
+    }
+};
+
+module.exports = {
+    handler
+};
 
 /**
  *
@@ -37,20 +78,3 @@ let response;
  * @returns {Object} object.body - JSON Payload to be returned
  *
  */
-exports.lambdaHandler = async (event, context) => {
-    try {
-        const ret = await axios(url);
-        response = {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: 'hello world',
-                location: ret.data.trim()
-            })
-        }
-    } catch (err) {
-        console.log(err);
-        return err;
-    }
-
-    return response
-};
