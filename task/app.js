@@ -5,7 +5,7 @@ const AWSXRay = require('aws-xray-sdk-core');
 const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient({
     region: process.env.AWS_REGION,
-    endpoint: process.env.DYNAMODB_ENTPOINT || undefined,
+    endpoint: process.env.DYNAMODB_ENDPOINT,
     convertEmptyValues:true});
 
 const dynamoPut = async (params) => {
@@ -19,7 +19,7 @@ const dynamoQuery = async (params) => {
 
 const getTask = async (event, context) => {
     try {
-        return generateResponse(200,{hello:"world"});
+
         let check = await dynamoQuery({
             TableName:process.env.DYNAMODB_TABLE,
             KeyConditionExpression: 'Id = :id',
@@ -44,9 +44,7 @@ const putTask = async (event, context) => {
         let check = await dynamoPut({
             TableName:process.env.DYNAMODB_TABLE,
             Item: {
-                Id:parseInt(event.pathParameters.taskId),
-                Task: JSON.parse(String(event.body.Task)),
-                Complete: Boolean(event.body.Complete)
+                Id:parseInt(event.pathParameters.taskId)
             }
         });
 
@@ -69,11 +67,6 @@ const generateResponse = (statusCode, body) => {
     }
 };
 
-module.exports = {
-    handler,
-    getTask,
-    putTask
-};
 
 const handler = async (event, context) => {
     try {
@@ -97,8 +90,32 @@ const handler = async (event, context) => {
 };
 
 
-handler().then(res=>console.log(res));
+let response;
 
+const lambdaHandler = async (event, context) => {
+    try {
+        const ret = await axios(url);
+        response = {
+            'statusCode': 200,
+            'body': JSON.stringify({
+                message: 'hello world hahaha',
+                location: ret.data.trim()
+            })
+        }
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+
+    return response
+};
+
+module.exports = {
+    handler,
+    getTask,
+    putTask,
+    lambdaHandler
+};
 
 /**
  *
